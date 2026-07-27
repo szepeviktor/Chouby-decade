@@ -72,6 +72,20 @@ Export the license only for the Composer process:
 POLYLANG_PRO_LICENSE_KEY='your-license-key' composer update wpsyntex/polylang-pro
 ```
 
+In a Bedrock project, the license may instead be added to the project-root
+`.env` file:
+
+```dotenv
+POLYLANG_PRO_LICENSE_KEY='your-license-key'
+```
+
+When `vlucas/phpdotenv` is installed, Chouby Decade loads this file before
+reading the license. An environment variable already exported for the Composer
+process takes precedence over the value in `.env`. Projects without
+`vlucas/phpdotenv` continue to use the process environment. In Bedrock,
+`WP_HOME` is also used as the site URL sent to the license API unless
+`extra.polylang-pro-site-url` is configured explicitly.
+
 The plugin adds the API's `new_version` to Composer's dependency pool only when
 it satisfies `^3.8`. Composer then records the selected concrete version in
 `composer.lock`. If a newer release does not satisfy the constraint, it is not

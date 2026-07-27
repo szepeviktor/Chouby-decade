@@ -15,6 +15,7 @@ use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreFileDownloadEvent;
 use Composer\Plugin\PrePoolCreateEvent;
 use Composer\Semver\Constraint\Constraint;
+use Dotenv\Dotenv;
 use RuntimeException;
 
 final class Plugin implements PluginInterface, EventSubscriberInterface
@@ -23,6 +24,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private const DIST_URL = 'https://polylang-pro.invalid/polylang-pro.zip';
     private const LICENSE_ENV = 'POLYLANG_PRO_LICENSE_KEY';
     private const PACKAGE_NAME = 'wpsyntex/polylang-pro';
+    private const SITE_URL_ENV = 'WP_HOME';
 
     /** @var Composer */
     private $composer;
@@ -144,7 +146,9 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             return $this->versionInfo;
         }
 
-        $license = getenv(self::LICENSE_ENV);
+        $this->loadDotenv();
+
+        $license = $this->getEnvironmentVariable(self::LICENSE_ENV);
 
         if (!is_string($license) || '' === trim($license)) {
             throw new RuntimeException(
@@ -192,6 +196,36 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         return $this->versionInfo;
     }
 
+    private function loadDotenv(): void
+    {
+        if (!class_exists(Dotenv::class)) {
+            return;
+        }
+
+        $workingDirectory = getcwd();
+
+        if (!is_string($workingDirectory) || !is_file($workingDirectory . DIRECTORY_SEPARATOR . '.env')) {
+            return;
+        }
+
+        Dotenv::createUnsafeImmutable($workingDirectory)->safeLoad();
+    }
+
+    private function getEnvironmentVariable(string $name): ?string
+    {
+        $value = getenv($name);
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (isset($_ENV[$name]) && is_string($_ENV[$name])) {
+            return $_ENV[$name];
+        }
+
+        return isset($_SERVER[$name]) && is_string($_SERVER[$name]) ? $_SERVER[$name] : null;
+    }
+
     /**
      * @param array<string, mixed> $versionInfo
      */
@@ -229,7 +263,11 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private function getSiteUrl(): ?string
     {
         $extra = $this->composer->getPackage()->getExtra();
-        $siteUrl = $extra['polylang-pro-site-url'] ?? $this->composer->getPackage()->getHomepage();
+        $siteUrl = $extra['polylang-pro-site-url'] ?? $this->getEnvironmentVariable(self::SITE_URL_ENV);
+
+        if (!is_string($siteUrl) || '' === trim($siteUrl)) {
+            $siteUrl = $this->composer->getPackage()->getHomepage();
+        }
 
         if (!is_string($siteUrl) || '' === trim($siteUrl)) {
             return null;
