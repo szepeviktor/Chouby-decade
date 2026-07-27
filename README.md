@@ -27,7 +27,11 @@ version before deployment.
 
 ## Consumer configuration
 
-Add the plugin repository and requirements:
+Composer plugins are activated only after they have been installed. On the
+first setup, Chouby Decade must therefore be installed before
+`wpsyntex/polylang-pro` is added to the root requirements.
+
+First add the plugin repository, plugin requirement, and Composer permission:
 
 ```json
 {
@@ -38,8 +42,7 @@ Add the plugin repository and requirements:
         }
     ],
     "require": {
-        "szepeviktor/chouby-decade": "^1.0",
-        "wpsyntex/polylang-pro": "^3.8"
+        "szepeviktor/chouby-decade": "^1.0"
     },
     "config": {
         "allow-plugins": {
@@ -52,16 +55,25 @@ Add the plugin repository and requirements:
 }
 ```
 
-On the first setup, install and allow the plugin before requiring the virtual
-Polylang Pro package:
+Install the plugin:
 
 ```bash
 composer require szepeviktor/chouby-decade:^1.0
+```
+
+Then require the virtual Polylang Pro package:
+
+```bash
 POLYLANG_PRO_LICENSE_KEY='your-license-key' composer require wpsyntex/polylang-pro:^3.8
 ```
 
 This two-step bootstrap is required only before the plugin exists in
 `vendor`. Subsequent deployments can use the committed lock file normally.
+
+If both requirements were added before the first `composer update`, Composer
+reports that `wpsyntex/polylang-pro` could not be found. Remove that requirement
+temporarily, install Chouby Decade, then add it again with the second command
+above.
 
 `polylang-pro-site-url` is optional. If it is absent, the root package's
 `homepage` is used; if neither exists, the API request omits the site URL.
